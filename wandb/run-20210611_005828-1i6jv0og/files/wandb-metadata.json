@@ -1,0 +1,18 @@
+{
+    "os": "macOS-11.4-x86_64-i386-64bit",
+    "python": "3.9.5",
+    "heartbeatAt": "2021-06-10T22:58:38.177377",
+    "startedAt": "2021-06-10T22:58:28.449920",
+    "docker": null,
+    "cpu_count": 4,
+    "cuda": null,
+    "args": [
+        "--mode=client",
+        "--port=64112"
+    ],
+    "state": "running",
+    "program": "<python with no main file>",
+    "host": "giacomos-macbook-air.home",
+    "username": "giacomo",
+    "executable": "/Users/giacomo/Documents/UNIL/Second_semester/Advanced_Data_Analysis/ADAProj/venv/bin/python"
+}

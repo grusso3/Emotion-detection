@@ -1,0 +1,16 @@
+{
+    "os": "macOS-11.4-x86_64-i386-64bit",
+    "python": "3.9.5",
+    "heartbeatAt": "2021-06-09T12:25:31.201780",
+    "startedAt": "2021-06-09T12:25:21.445511",
+    "docker": null,
+    "cpu_count": 4,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "/Users/giacomo/Documents/UNIL/Second_semester/Advanced_Data_Analysis/ADAProj/main.py",
+    "codePath": "main.py",
+    "host": "giacomos-macbook-air.home",
+    "username": "giacomo",
+    "executable": "/Users/giacomo/Documents/UNIL/Second_semester/Advanced_Data_Analysis/ADAProj/venv/bin/python"
+}
