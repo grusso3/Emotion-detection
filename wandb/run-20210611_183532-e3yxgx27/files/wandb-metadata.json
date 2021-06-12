@@ -1,0 +1,22 @@
+{
+    "os": "macOS-11.4-x86_64-i386-64bit",
+    "python": "3.9.5",
+    "heartbeatAt": "2021-06-11T16:35:43.818544",
+    "startedAt": "2021-06-11T16:35:32.480965",
+    "docker": null,
+    "cpu_count": 4,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "/Users/giacomo/Documents/UNIL/Second_semester/Advanced_Data_Analysis/ADAProj/TransferL.py",
+    "codePath": "TransferL.py",
+    "git": {
+        "remote": "https://github.com/grusso1/EmotionDetection.git",
+        "commit": "3e25aed6e1752018c174cdb0693bbd3c9de624fe"
+    },
+    "email": "giacomo.russo@unil.ch",
+    "root": "/Users/giacomo/Documents/UNIL/Second_semester/Advanced_Data_Analysis/ADAProj",
+    "host": "giacomos-macbook-air.home",
+    "username": "giacomo",
+    "executable": "/Users/giacomo/Documents/UNIL/Second_semester/Advanced_Data_Analysis/ADAProj/venv/bin/python"
+}

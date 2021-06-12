@@ -1,11 +1,39 @@
+from __future__ import print_function
+from __future__ import division
+import torch.nn as nn
+from torchvision import datasets, models, transforms
 import torch
 from ignite.engine import Events, create_supervised_trainer, create_supervised_evaluator,Engine
 from ignite.metrics import Accuracy, Loss
 from torch import nn
 from torch.utils.data import DataLoader
 import wandb
-from Classes import Network, Network2
 from Classes import EmotionData
+from torch.utils.data.dataloader import default_collate
+
+
+
+
+
+# Load the pretrained model from pytorch
+model = models.vgg16(pretrained=False)
+print(model.classifier[6].out_features) # 1000
+
+# Freeze training for all layers
+for param in model.features.parameters():
+    param.require_grad = False
+
+# Newly created modules have require_grad=True by default
+num_features = model.classifier[6].in_features
+features = list(model.classifier.children())[:-1] # Remove last layer
+features.extend([nn.Linear(num_features, 7)]) # Add our layer with 4 outputs
+model.classifier = nn.Sequential(*features) # Replace the model classifier
+first_conv_layer = [nn.Conv2d(1, 3, kernel_size=3, stride=1, padding=1, dilation=1, groups=1, bias=True)]
+first_conv_layer.extend(list(model.features))
+model.features= nn.Sequential(*first_conv_layer )
+#print(model)
+
+model = model.to("cuda:0")
 
 
 lr = 0.01
@@ -21,13 +49,21 @@ wandb.init(
       "architecture": "CNN",
       "dataset": "EmotionDataset"})
 
-model = Network2()
+
+if torch.cuda.is_available():
+  device = torch.device("cuda:0")
+  print("GPU")
+else:
+  device = torch.device("cpu")
+  print("CPU")
 
 TrainData = EmotionData('train.csv', './')
-TrainLoader = DataLoader(TrainData, batch_size=32, shuffle=True, pin_memory=True)  # create train data loaders
+TrainLoader = DataLoader(TrainData, batch_size=32, shuffle=True,
+                    collate_fn=lambda x: tuple(x_.to(device) for x_ in default_collate(x)))  # create train data loaders
 
 TestData = EmotionData('test.csv', './')
-TestLoader = DataLoader(TestData, batch_size=64, pin_memory=True)  # create validation data loaders
+TestLoader = DataLoader(TestData, batch_size=64,
+                    collate_fn=lambda x: tuple(x_.to(device) for x_ in default_collate(x)))  # create validation data loaders
 
 optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.8)
 criterion = nn.CrossEntropyLoss()
@@ -72,19 +108,7 @@ def log_validation_results(trainer):
         f"Validation Results - Epoch: {trainer.state.epoch}  Avg accuracy: {metrics['accuracy']:} Avg loss: {metrics['loss']:} | Val Loss: {trainer.state.output:.2f}")
 
 
-trainer.run(TrainLoader, max_epochs=25)
 
-from torchvision.utils import make_grid
-import matplotlib.pyplot as plt
+trainer.run(TrainLoader, max_epochs=10)
 
 
-def show_batch(dl):
-    """Plot images grid of single batch"""
-    for images, labels in dl:
-        fig, ax = plt.subplots(figsize=(16, 12))
-        ax.set_xticks([])
-        ax.set_yticks([])
-        ax.imshow(make_grid(images, nrow=16).permute(1, 2, 0))
-        break
-
-# show_batch(Train_Loader)
