@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 import wandb
 from Classes import Network, Network2
 from Classes import EmotionData
+from ignite.handlers import ModelCheckpoint, EarlyStopping
 
 
 lr = 0.01
@@ -21,7 +22,7 @@ wandb.init(
       "architecture": "CNN",
       "dataset": "EmotionDataset"})
 
-model = Network2()
+model = Network()
 
 TrainData = EmotionData('train.csv', './')
 TrainLoader = DataLoader(TrainData, batch_size=32, shuffle=True, pin_memory=True)  # create train data loaders
@@ -71,13 +72,27 @@ def log_validation_results(trainer):
     print(
         f"Validation Results - Epoch: {trainer.state.epoch}  Avg accuracy: {metrics['accuracy']:} Avg loss: {metrics['loss']:} | Val Loss: {trainer.state.output:.2f}")
 
+checkpointer = ModelCheckpoint('saved_models', 'EmotionData', n_saved=2, create_dir=True, save_as_state_dict=True, require_empty=False)
+trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpointer, {'EmotionData': model})
 
-trainer.run(TrainLoader, max_epochs=25)
+trainer.run(TrainLoader, max_epochs=2)
+
 
 from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
 
 
+
+
+
+
+
+
+
+
+
+
+# plot images of a batchbatch
 def show_batch(dl):
     """Plot images grid of single batch"""
     for images, labels in dl:

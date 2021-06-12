@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 import wandb
 from Classes import EmotionData
 from torch.utils.data.dataloader import default_collate
+from ignite.handlers import ModelCheckpoint
 
 
 
@@ -107,6 +108,9 @@ def log_validation_results(trainer):
     print(
         f"Validation Results - Epoch: {trainer.state.epoch}  Avg accuracy: {metrics['accuracy']:} Avg loss: {metrics['loss']:} | Val Loss: {trainer.state.output:.2f}")
 
+# Add checkpoint
+checkpointer = ModelCheckpoint('saved_models', 'VGG16', n_saved=2, create_dir=True, save_as_state_dict=True, require_empty=False)
+trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpointer, {'VGG16': model})
 
 
 trainer.run(TrainLoader, max_epochs=10)
