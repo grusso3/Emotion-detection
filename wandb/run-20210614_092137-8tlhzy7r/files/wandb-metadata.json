@@ -1,0 +1,22 @@
+{
+    "os": "macOS-11.4-x86_64-i386-64bit",
+    "python": "3.9.5",
+    "heartbeatAt": "2021-06-14T07:21:45.451240",
+    "startedAt": "2021-06-14T07:21:37.101279",
+    "docker": null,
+    "cpu_count": 4,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "/Users/giacomo/Documents/UNIL/Second_semester/Advanced_Data_Analysis/ADAProj/PredPlots.py",
+    "codePath": "PredPlots.py",
+    "git": {
+        "remote": "https://github.com/grusso1/EmotionDetection.git",
+        "commit": "26e759e73a02af6ebbfbd853dd5de73e9f303bdd"
+    },
+    "email": "giacomo.russo@unil.ch",
+    "root": "/Users/giacomo/Documents/UNIL/Second_semester/Advanced_Data_Analysis/ADAProj",
+    "host": "Giacomos-MacBook-Air.local",
+    "username": "giacomo",
+    "executable": "/Users/giacomo/Documents/UNIL/Second_semester/Advanced_Data_Analysis/ADAProj/venv/bin/python"
+}

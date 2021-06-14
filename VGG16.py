@@ -8,16 +8,18 @@ from ignite.metrics import Accuracy, Loss
 from torch import nn
 from torch.utils.data import DataLoader
 import wandb
-from Classes import EmotionData
+from Classes import EmotionData, EmotionDataTest
 from torch.utils.data.dataloader import default_collate
 from ignite.handlers import ModelCheckpoint
+from ignite.handlers import EarlyStopping
+
 
 
 
 
 
 # Load the pretrained model from pytorch
-model = models.vgg16(pretrained=False)
+model = models.vgg16(pretrained=True)
 print(model.classifier[6].out_features) # 1000
 
 # Freeze training for all layers
@@ -34,10 +36,10 @@ first_conv_layer.extend(list(model.features))
 model.features= nn.Sequential(*first_conv_layer )
 #print(model)
 
-model = model.to("cuda:0")
+#model = model.to("cuda:0")
 
 
-lr = 0.01
+lr = 0.0007
 
 wandb.init(
       # Set entity to specify your username or team name
@@ -59,14 +61,15 @@ else:
   print("CPU")
 
 TrainData = EmotionData('train.csv', './')
-TrainLoader = DataLoader(TrainData, batch_size=32, shuffle=True,
-                    collate_fn=lambda x: tuple(x_.to(device) for x_ in default_collate(x)))  # create train data loaders
+TrainLoader = DataLoader(TrainData, batch_size=32, shuffle=True, pin_memory=True)  # create train data loaders
 
-TestData = EmotionData('test.csv', './')
-TestLoader = DataLoader(TestData, batch_size=64,
-                    collate_fn=lambda x: tuple(x_.to(device) for x_ in default_collate(x)))  # create validation data loaders
+TestData = EmotionDataTest('test.csv', './')
+TestLoader = DataLoader(TestData, batch_size=64, pin_memory=True)  # create validation data loaders
 
-optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.8)
+#optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.8)
+optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay= 0.00001)
+
+
 criterion = nn.CrossEntropyLoss()
 
 trainer = create_supervised_trainer(model, optimizer, criterion)
@@ -113,6 +116,14 @@ checkpointer = ModelCheckpoint('saved_models', 'VGG16', n_saved=2, create_dir=Tr
 trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpointer, {'VGG16': model})
 
 
-trainer.run(TrainLoader, max_epochs=10)
+trainer.run(TrainLoader, max_epochs=25)
 
 
+
+def score_function(trainer):
+    val_loss = trainer.state.metrics['loss']
+    return -val_loss
+
+handler = EarlyStopping(patience=5, score_function=score_function, trainer=trainer)
+# Note: the handler is attached to an *Evaluator* (runs one epoch on validation dataset).
+validation_evaluator.add_event_handler(Events.COMPLETED, handler)

@@ -24,9 +24,33 @@ class EmotionData(Dataset):
         y_label = torch.tensor(int(self.annotations.iloc[index][1])).long()
 
         # Image 2 tensor
-        trans = transforms.ToTensor()
-        image = trans(image)
+        transform_train = transforms.Compose([
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomRotation(degrees=(-90, 90)),
+            transforms.RandomVerticalFlip(p=0.5),
+            transforms.ToTensor()
+        ])
+        image = transform_train(image)
         return image, y_label
+
+class EmotionDataTest(Dataset):
+    def __init__(self, csv_file, root_dir):
+        self.annotations = pd.read_csv(csv_file)  # pd object
+        self.root_dir = root_dir
+
+    def __len__(self):
+        return len(self.annotations)
+
+    def __getitem__(self, index):
+        img_path = os.path.join(self.root_dir, self.annotations.iloc[index][0])
+        image = Image.open(img_path)
+        y_label = torch.tensor(int(self.annotations.iloc[index][1])).long()
+
+        # Image 2 tensor
+        transform = transforms.ToTensor()
+        image = transform(image)
+        return image, y_label
+
 
 
 class Network(nn.Module):

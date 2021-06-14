@@ -113,3 +113,11 @@ dmypy.json
 # Pyre type checker
 .pyre/
 Data/
+wandb/run-20210614_093029-262wqwmc/files/wandb-metadata.json
+wandb/run-20210614_093029-262wqwmc/files/config.yaml
+wandb/run-20210614_093517-2wds2inp/run-2wds2inp.wandb
+wandb/run-20210614_093517-2wds2inp/files/wandb-metadata.json
+wandb/run-20210614_093517-2wds2inp/files/wandb-metadata.json
+wandb/run-20210614_093029-262wqwmc/files/requirements.txt
+*.wandb
+*.pt

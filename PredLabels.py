@@ -1,8 +1,12 @@
-from main import *
+#from main import *
 import pathlib
 import numpy as np
 import pandas as pd
+
+from main import model
 from main import TestLoader
+import torch
+
 
 
 
