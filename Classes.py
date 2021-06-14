@@ -31,7 +31,8 @@ class EmotionData(Dataset):
             transforms.ToTensor()
         ])
         image = transform_train(image)
-        return image, y_label
+        return image.repeat(3, 1, 1), y_label
+
 
 class EmotionDataTest(Dataset):
     def __init__(self, csv_file, root_dir):
@@ -49,8 +50,7 @@ class EmotionDataTest(Dataset):
         # Image 2 tensor
         transform = transforms.ToTensor()
         image = transform(image)
-        return image, y_label
-
+        return image.repeat(3, 1, 1), y_label
 
 
 class Network(nn.Module):
@@ -58,7 +58,7 @@ class Network(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=6, kernel_size=(4, 4))
         self.conv2 = nn.Conv2d(in_channels=6, out_channels=12, kernel_size=(3, 3))
-        self.fc1 = nn.Linear(in_features=12*9*9, out_features=120)
+        self.fc1 = nn.Linear(in_features=12 * 9 * 9, out_features=120)
         self.fc2 = nn.Linear(in_features=120, out_features=60)
         self.out = nn.Linear(in_features=60, out_features=7)
 
@@ -77,7 +77,7 @@ class Network(nn.Module):
         t = F.max_pool2d(t, kernel_size=3, stride=2)
 
         # 3rd hidden layer
-        t = t.reshape(-1, 12*9*9)
+        t = t.reshape(-1, 12 * 9 * 9)
         t = self.fc1(t)
         t = F.relu(t)
 
@@ -88,7 +88,7 @@ class Network(nn.Module):
         # Output layer
         t = self.out(t)
 
-        t = F.softmax(t, dim = 1)
+        t = F.softmax(t, dim=1)
         # already included in cross entrophy loss
         return t
 
@@ -99,7 +99,7 @@ class Network2(nn.Module):
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(3, 3))
         self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(5, 5))
         self.conv3 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(3, 3))
-        self.fc1 = nn.Linear(in_features= 128 * 2 * 2, out_features=256)
+        self.fc1 = nn.Linear(in_features=128 * 2 * 2, out_features=256)
         self.fc2 = nn.Linear(in_features=256, out_features=128)
         self.out = nn.Linear(in_features=128, out_features=7)
 
@@ -122,7 +122,6 @@ class Network2(nn.Module):
         t = F.relu(t)
         t = F.max_pool2d(t, kernel_size=3, stride=2)
 
-
         # 3rd hidden layer
         t = t.reshape(-1, 128 * 2 * 2)
         t = self.fc1(t)
@@ -135,31 +134,9 @@ class Network2(nn.Module):
         # Output layer
         t = self.out(t)
 
-        t = F.softmax(t, dim = 1 )
+        t = F.softmax(t, dim=1)
         # already included in cross entrophy loss
         return t
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #
 #
@@ -180,14 +157,3 @@ class Network2(nn.Module):
 #         if self.transform is not None:
 #             image = self.transform(image)
 #         return image, y_label
-
-
-
-
-
-
-
-
-
-
-

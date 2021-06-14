@@ -15,22 +15,22 @@ from ignite.handlers import EarlyStopping
 
 
 
-
+wandb.login(key="a8895ab6bdbe3827b2a137c581e59e9440154140")
 
 
 # Load the pretrained model from pytorch
 model = models.vgg16(pretrained=True)
 print(model.classifier[6].out_features) # 1000
-
+r.children())[:-1] # Remove last layer
+features.extend([nn.Linear(num_features, 7)]) # Add our layer with 4 outputs
+model.classifier = nn.Sequential(*
 # Freeze training for all layers
 for param in model.features.parameters():
     param.require_grad = False
 
 # Newly created modules have require_grad=True by default
 num_features = model.classifier[6].in_features
-features = list(model.classifier.children())[:-1] # Remove last layer
-features.extend([nn.Linear(num_features, 7)]) # Add our layer with 4 outputs
-model.classifier = nn.Sequential(*features) # Replace the model classifier
+features = list(model.classifiefeatures) # Replace the model classifier
 first_conv_layer = [nn.Conv2d(1, 3, kernel_size=3, stride=1, padding=1, dilation=1, groups=1, bias=True)]
 first_conv_layer.extend(list(model.features))
 model.features= nn.Sequential(*first_conv_layer )
@@ -39,7 +39,7 @@ model.features= nn.Sequential(*first_conv_layer )
 #model = model.to("cuda:0")
 
 
-lr = 0.0007
+lr = 1e-5
 
 wandb.init(
       # Set entity to specify your username or team name
@@ -112,8 +112,8 @@ def log_validation_results(trainer):
         f"Validation Results - Epoch: {trainer.state.epoch}  Avg accuracy: {metrics['accuracy']:} Avg loss: {metrics['loss']:} | Val Loss: {trainer.state.output:.2f}")
 
 # Add checkpoint
-checkpointer = ModelCheckpoint('saved_models', 'VGG16', n_saved=2, create_dir=True, save_as_state_dict=True, require_empty=False)
-trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpointer, {'VGG16': model})
+checkpointer = ModelCheckpoint('saved_models', 'VGG16e-5', n_saved=2, create_dir=True, save_as_state_dict=True, require_empty=False)
+trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpointer, {'VGG16e-5': model})
 
 
 trainer.run(TrainLoader, max_epochs=25)
