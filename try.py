@@ -1,3 +1,7 @@
+#%%
+import torch
+
+#%%
 from torch import optim
 from main import *
 from torch.utils.data import TensorDataset, DataLoader
@@ -5,6 +9,7 @@ from Classes import Network
 import torch.nn.functional as F
 from Run import *
 
+#%%
 # let's try our dataset through the Network
 batch = next(iter(Train_Loader))  # Get Batch
 images, label = batch

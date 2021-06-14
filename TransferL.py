@@ -3,7 +3,7 @@ from __future__ import division
 import torch.nn as nn
 from torchvision import datasets, models, transforms
 import torch
-from ignite.engine import Events, create_supervised_trainer, create_supervised_evaluator,Engine
+from ignite.engine import Events, create_supervised_trainer, create_supervised_evaluator, Engine
 from ignite.metrics import Accuracy, Loss
 from torch import nn
 from torch.utils.data import DataLoader
@@ -11,12 +11,8 @@ import wandb
 from Classes import EmotionData
 from torch.utils.data.dataloader import default_collate
 
-
-
-
-
 # Load the pretrained model from pytorch
-model = models.vgg16(pretrained=False)
+model = models.vgg16(pretrained=True)
 print(model.classifier[6].out_features) # 1000
 
 # Freeze training for all layers
@@ -33,23 +29,6 @@ first_conv_layer.extend(list(model.features))
 model.features= nn.Sequential(*first_conv_layer )
 #print(model)
 
-model = model.to("cuda:0")
-
-
-lr = 0.01
-
-wandb.init(
-      # Set entity to specify your username or team name
-      # ex: entity="carey",
-      # Set the project where this run will be logged
-      project="EmotionDetection",
-      # Track hyperparameters and run metadata
-      config={
-      "learning_rate": lr,
-      "architecture": "CNN",
-      "dataset": "EmotionDataset"})
-
-
 if torch.cuda.is_available():
   device = torch.device("cuda:0")
   print("GPU")
@@ -57,12 +36,27 @@ else:
   device = torch.device("cpu")
   print("CPU")
 
+torch.cuda.empty_cache()  # entirely clear all allocated memory
+
+model = model.to(device)
+
+
+lr = 0.0001
+
+wandb.init(project='EmotionDetection', entity='adrian1118',
+      # Track hyperparameters and run metadata
+      config={
+      "learning_rate": lr,
+      "architecture": "CNN",
+      "dataset": "EmotionDataset"})
+
+
 TrainData = EmotionData('train.csv', './')
-TrainLoader = DataLoader(TrainData, batch_size=32, shuffle=True,
+TrainLoader = DataLoader(TrainData, batch_size=16, shuffle=True,
                     collate_fn=lambda x: tuple(x_.to(device) for x_ in default_collate(x)))  # create train data loaders
 
 TestData = EmotionData('test.csv', './')
-TestLoader = DataLoader(TestData, batch_size=64,
+TestLoader = DataLoader(TestData, batch_size=32,
                     collate_fn=lambda x: tuple(x_.to(device) for x_ in default_collate(x)))  # create validation data loaders
 
 optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.8)
@@ -110,5 +104,3 @@ def log_validation_results(trainer):
 
 
 trainer.run(TrainLoader, max_epochs=10)
-
-

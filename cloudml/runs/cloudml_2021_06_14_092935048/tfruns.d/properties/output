@@ -1,0 +1,38 @@
+
+> library(keras)
+
+> library(cloudml)
+
+> data_path <- gs_data_dir_local("gs://boreal-dock-314313/ada2021/data/train/")
+
+> generator_train <- image_data_generator(rescale = 1/255, 
++     validation_split = 0.2, width_shift_range = 0.4, height_shift_range = 0.4, 
++     sh .... [TRUNCATED] 
+
+> generator_valid <- image_data_generator(rescale = 1/255, 
++     validation_split = 0.2)
+
+> train_flow <- flow_images_from_directory(data_path, 
++     generator = generator_train, target_size = c(48, 48), batch_size = 64, 
++     subset = "t ..." ... [TRUNCATED] 
+
+> valid_flow <- flow_images_from_directory(data_path, 
++     generator = generator_valid, target_size = c(48, 48), batch_size = 32, 
++     subset = "v ..." ... [TRUNCATED] 
+
+> model_base <- application_densenet169(include_top = FALSE, 
++     weights = "imagenet", input_shape = c(48, 48, 3))
+
+> freeze_weights(model_base)
+
+> model <- keras_model_sequential() %>% model_base %>% 
++     layer_flatten() %>% layer_dense(100, activation = "relu") %>% 
++     layer_dropout(0.3)  .... [TRUNCATED] 
+
+> model %>% compile(optimizer = optimizer_rmsprop(), 
++     loss = loss_categorical_crossentropy, metric = metric_categorical_accuracy)
+
+> model %>% fit_generator(generator = train_flow, steps_per_epoch = train_flow$n/train_flow$batch_size, 
++     epochs = 30, validation_data = valid_fl .... [TRUNCATED] 
+
+> model %>% save_model_hdf5("model_densenet169.rds")

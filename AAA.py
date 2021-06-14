@@ -12,9 +12,6 @@ from Classes import EmotionData
 from torch.utils.data.dataloader import default_collate
 
 
-
-
-
 # Load the pretrained model from pytorch
 model = models.vgg16(pretrained=True)
 print(model.classifier[6].out_features) # 1000
@@ -33,13 +30,11 @@ first_conv_layer.extend(list(model.features))
 model.features= nn.Sequential(*first_conv_layer )
 #print(model)
 
-
-
 lr = 0.01
 
 wandb.init(
       # Set entity to specify your username or team name
-      # ex: entity="carey",
+      entity="adrian1118",
       # Set the project where this run will be logged
       project="EmotionDetection",
       # Track hyperparameters and run metadata
@@ -99,8 +94,5 @@ def log_validation_results(trainer):
     print(
         f"Validation Results - Epoch: {trainer.state.epoch}  Avg accuracy: {metrics['accuracy']:} Avg loss: {metrics['loss']:} | Val Loss: {trainer.state.output:.2f}")
 
-
-
 trainer.run(TrainLoader, max_epochs=10)
-
 

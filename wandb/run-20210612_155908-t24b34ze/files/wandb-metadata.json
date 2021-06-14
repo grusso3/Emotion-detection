@@ -1,0 +1,24 @@
+{
+    "os": "Windows-10-10.0.21390-SP0",
+    "python": "3.9.2",
+    "heartbeatAt": "2021-06-12T13:59:13.117475",
+    "startedAt": "2021-06-12T13:59:08.576787",
+    "docker": null,
+    "gpu": "NVIDIA GeForce GTX 750",
+    "gpu_count": 1,
+    "cpu_count": 8,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "D:\\Adrian van Kampen\\Documents\\HEC Codes\\ADA2021\\EmotionDetection\\TransferL.py",
+    "codePath": "TransferL.py",
+    "git": {
+        "remote": "https://github.com/grusso1/EmotionDetection.git",
+        "commit": "356bac74949b3956103b8b4e18a33c21e342c569"
+    },
+    "email": "adrian.vankampen@helvetia-vaud.ch",
+    "root": "D:/Adrian van Kampen/Documents/HEC Codes/ADA2021/EmotionDetection",
+    "host": "DESKTOP-4GF1A7F",
+    "username": "Adrian van Kampen",
+    "executable": "D:\\Adrian van Kampen\\Documents\\HEC Codes\\venv\\Scripts\\python.exe"
+}

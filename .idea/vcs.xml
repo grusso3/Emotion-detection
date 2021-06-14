@@ -2,8 +2,6 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/ADA-Proj" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/ADAProj" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/EmotionDetection" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/ai-platform-samples" vcs="Git" />
   </component>
 </project>
