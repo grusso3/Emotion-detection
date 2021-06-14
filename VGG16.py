@@ -19,27 +19,23 @@ wandb.login(key="a8895ab6bdbe3827b2a137c581e59e9440154140")
 
 
 # Load the pretrained model from pytorch
-model = models.vgg16(pretrained=True)
+model = models.vgg11(pretrained=True)
 print(model.classifier[6].out_features) # 1000
-r.children())[:-1] # Remove last layer
+num_features = model.classifier[6].in_features
+features = list(model.classifier.children())[:-1] # Remove last layer
 features.extend([nn.Linear(num_features, 7)]) # Add our layer with 4 outputs
-model.classifier = nn.Sequential(*
+model.classifier = nn.Sequential(*features)
 # Freeze training for all layers
 for param in model.features.parameters():
-    param.require_grad = False
+    param.require_grad = True
 
-# Newly created modules have require_grad=True by default
-num_features = model.classifier[6].in_features
-features = list(model.classifiefeatures) # Replace the model classifier
-first_conv_layer = [nn.Conv2d(1, 3, kernel_size=3, stride=1, padding=1, dilation=1, groups=1, bias=True)]
-first_conv_layer.extend(list(model.features))
-model.features= nn.Sequential(*first_conv_layer )
+
 #print(model)
 
 #model = model.to("cuda:0")
 
 
-lr = 1e-5
+lr = 1e-4
 
 wandb.init(
       # Set entity to specify your username or team name
@@ -60,27 +56,33 @@ else:
   device = torch.device("cpu")
   print("CPU")
 
+model = model.to(device)
+
+
 TrainData = EmotionData('train.csv', './')
-TrainLoader = DataLoader(TrainData, batch_size=32, shuffle=True, pin_memory=True)  # create train data loaders
+TrainLoader = DataLoader(TrainData, batch_size=32, shuffle=True, pin_memory=True, num_workers=4)  # create train data loaders
 
 TestData = EmotionDataTest('test.csv', './')
-TestLoader = DataLoader(TestData, batch_size=64, pin_memory=True)  # create validation data loaders
+TestLoader = DataLoader(TestData, batch_size=64, pin_memory=True,num_workers=4)  # create validation data loaders
 
 #optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.8)
-optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay= 0.00001)
+optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0)
 
 
 criterion = nn.CrossEntropyLoss()
 
-trainer = create_supervised_trainer(model, optimizer, criterion)
+trainer = create_supervised_trainer(model, optimizer, criterion,
+                                    device='cuda:0' if torch.cuda.is_available() else 'cpu')
 
 val_metrics = {
     "accuracy": Accuracy(),
     "loss": Loss(criterion)
 }
 #evaluator = create_supervised_evaluator(model, metrics=val_metrics)
-train_evaluator = create_supervised_evaluator(model, metrics=val_metrics)
-validation_evaluator = create_supervised_evaluator(model, metrics=val_metrics)
+train_evaluator = create_supervised_evaluator(model, metrics=val_metrics,
+                                    device='cuda:0' if torch.cuda.is_available() else 'cpu')
+validation_evaluator = create_supervised_evaluator(model, metrics=val_metrics,
+                                    device='cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 @trainer.on(Events.ITERATION_COMPLETED(every=100))
@@ -112,11 +114,11 @@ def log_validation_results(trainer):
         f"Validation Results - Epoch: {trainer.state.epoch}  Avg accuracy: {metrics['accuracy']:} Avg loss: {metrics['loss']:} | Val Loss: {trainer.state.output:.2f}")
 
 # Add checkpoint
-checkpointer = ModelCheckpoint('saved_models', 'VGG16e-5', n_saved=2, create_dir=True, save_as_state_dict=True, require_empty=False)
-trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpointer, {'VGG16e-5': model})
+checkpointer = ModelCheckpoint('saved_models', 'VGG16e-4', n_saved=2, create_dir=True, save_as_state_dict=True, require_empty=False)
+trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpointer, {'VGG16e-4': model})
 
 
-trainer.run(TrainLoader, max_epochs=25)
+
 
 
 
@@ -127,3 +129,5 @@ def score_function(trainer):
 handler = EarlyStopping(patience=5, score_function=score_function, trainer=trainer)
 # Note: the handler is attached to an *Evaluator* (runs one epoch on validation dataset).
 validation_evaluator.add_event_handler(Events.COMPLETED, handler)
+
+trainer.run(TrainLoader, max_epochs=30)
