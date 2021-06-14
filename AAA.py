@@ -10,10 +10,14 @@ from torch.utils.data import DataLoader
 import wandb
 from Classes import EmotionData
 from torch.utils.data.dataloader import default_collate
+from ignite.handlers import ModelCheckpoint
+
+
+
 
 
 # Load the pretrained model from pytorch
-model = models.vgg16(pretrained=True)
+model = models.vgg16(pretrained=False)
 print(model.classifier[6].out_features) # 1000
 
 # Freeze training for all layers
@@ -30,11 +34,14 @@ first_conv_layer.extend(list(model.features))
 model.features= nn.Sequential(*first_conv_layer )
 #print(model)
 
+model = model.to("cuda:0")
+
+
 lr = 0.01
 
 wandb.init(
       # Set entity to specify your username or team name
-      entity="adrian1118",
+      # ex: entity="carey",
       # Set the project where this run will be logged
       project="EmotionDetection",
       # Track hyperparameters and run metadata
@@ -44,13 +51,20 @@ wandb.init(
       "dataset": "EmotionDataset"})
 
 
-
+if torch.cuda.is_available():
+  device = torch.device("cuda:0")
+  print("GPU")
+else:
+  device = torch.device("cpu")
+  print("CPU")
 
 TrainData = EmotionData('train.csv', './')
-TrainLoader = DataLoader(TrainData, batch_size=32, shuffle=True,pin_memory=True)  # create train data loaders
+TrainLoader = DataLoader(TrainData, batch_size=32, shuffle=True,
+                    collate_fn=lambda x: tuple(x_.to(device) for x_ in default_collate(x)))  # create train data loaders
 
 TestData = EmotionData('test.csv', './')
-TestLoader = DataLoader(TestData, batch_size=64,pin_memory=True)  # create validation data loaders
+TestLoader = DataLoader(TestData, batch_size=64,
+                    collate_fn=lambda x: tuple(x_.to(device) for x_ in default_collate(x)))  # create validation data loaders
 
 optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.8)
 criterion = nn.CrossEntropyLoss()
@@ -94,5 +108,11 @@ def log_validation_results(trainer):
     print(
         f"Validation Results - Epoch: {trainer.state.epoch}  Avg accuracy: {metrics['accuracy']:} Avg loss: {metrics['loss']:} | Val Loss: {trainer.state.output:.2f}")
 
+# Add checkpoint
+checkpointer = ModelCheckpoint('saved_models', 'VGG16', n_saved=2, create_dir=True, save_as_state_dict=True, require_empty=False)
+trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpointer, {'VGG16': model})
+
+
 trainer.run(TrainLoader, max_epochs=10)
+
 
