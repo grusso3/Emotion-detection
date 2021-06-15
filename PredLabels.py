@@ -2,44 +2,97 @@
 import pathlib
 import numpy as np
 import pandas as pd
-
+from torch import nn
 from main import model
-from main import TestLoader
 import torch
+from sklearn.metrics import confusion_matrix
+from torchvision import models
+from Classes import EmotionDataTest
+from torch.utils.data import DataLoader
 
 
+TestData = EmotionDataTest('test.csv', './')
+TestLoader = DataLoader(TestData, batch_size=64, pin_memory=True,num_workers=4)  # create validation data loaders
+
+########### BRUTE FORCE #########
+model16 = models.vgg16(pretrained=True)
+# Newly created modules have require_grad=True by default
+num_features = model16.classifier[6].in_features
+features = list(model16.classifier.children())[:-1] # Remove last layer
+features.extend([nn.Linear(num_features, 7)]) # Add our layer with 4 outputs
+model16.classifier = nn.Sequential(*features)
+model16.load_state_dict(torch.load("saved_models/VGG16e-4_VGG16e-4_8082.pt"),strict= False)
+
+model16.eval()
 
 
-model_path = next(pathlib.Path('saved_models').rglob('*'))
-model_path
+prediction = []
+label = []
 
-model_state_dict = torch.load(model_path)
-model.load_state_dict(model_state_dict)
+correct, all = 0,0
+for images,labels in TestLoader:
+    for i in range(len(labels)):
+        if torch.cuda.is_available():
+            images = images.cuda()
+            labels = labels.cuda()
+        img = images[i].view(1,1,48,48)
+        with torch.no_grad():
+            logps = model16(img)
+        ps = torch.exp(logps)
+        prob = list(ps.cpu()[0])
+        pred_label = prob.index(max(prob))
+        true_label = labels.cpu()[i]
+        if (true_label == pred_label):
+            correct += 1
+        all += 1
+        prediction.append(pred_label)
+        label.append(true_label)
+print("Number of images", all)
+print("Accuracy",correct/all)
 
-predictions = []
-labels = []
+confusion_matrix(label,prediction)
 
-# change model mode to 'evaluation'
-# disable dropout and use learned batch norm statistics
-model.eval()
+df = pd.DataFrame({"Actual" : label,"Predicted":prediction})
+df
 
-with torch.no_grad():
-    for batch in TestLoader:
-        x, label = batch
-#         logits = model(title)
-        logits = model(x)
 
-        y_pred = torch.max(logits, dim=1)[1]
-        # move from GPU to CPU and convert to numpy array
-        y_pred_numpy = y_pred.cpu().numpy()
+#################### VGG 11
+model11 = models.vgg11(pretrained=True)
+# Newly created modules have require_grad=True by default
+num_features = model11.classifier[6].in_features
+features = list(model11.classifier.children())[:-1] # Remove last layer
+features.extend([nn.Linear(num_features, 7)]) # Add our layer with 4 outputs
+model11.classifier = nn.Sequential(*features)
+model11.load_state_dict(torch.load("saved_models/VGG16e-4_VGG16e-4_8082.pt"),strict= False)
 
-        predictions = np.concatenate([predictions, y_pred_numpy])
+model16.eval()
 
-classes = ['angry', 'disgust', 'fear',"happy","neutral","sad","surprise"]
 
-predictions_str = [classes[int(p)] for p in predictions]
-# test.csv index in a contiguous integers from 0 to len(test_set)
-# to this should work fine
-submission = pd.DataFrame({'id': list(range(len(predictions_str))), 'label': predictions_str})
+prediction = []
+label = []
 
-submission.head()
+correct, all = 0,0
+for images,labels in TestLoader:
+    for i in range(len(labels)):
+        if torch.cuda.is_available():
+            images = images.cuda()
+            labels = labels.cuda()
+        img = images[i].view(1,1,48,48)
+        with torch.no_grad():
+            logps = model11(img)
+        ps = torch.exp(logps)
+        prob = list(ps.cpu()[0])
+        pred_label = prob.index(max(prob))
+        true_label = labels.cpu()[i]
+        if (true_label == pred_label):
+            correct += 1
+        all += 1
+        prediction.append(pred_label)
+        label.append(true_label)
+print("Number of images", all)
+print("Accuracy",correct/all)
+
+confusion_matrix(label,prediction)
+
+df11 = pd.DataFrame({"Actual" : label,"Predicted":prediction})
+df11

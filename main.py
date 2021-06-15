@@ -9,7 +9,8 @@ from Classes import EmotionData,EmotionDataTest
 from ignite.handlers import ModelCheckpoint, EarlyStopping
 
 
-lr = 0.01
+lr = 1e-6
+wandb.login(key="a8895ab6bdbe3827b2a137c581e59e9440154140")
 
 wandb.init(
       # Set entity to specify your username or team name
@@ -22,26 +23,39 @@ wandb.init(
       "architecture": "CNN",
       "dataset": "EmotionDataset"})
 
-model = Network()
+if torch.cuda.is_available():
+  device = torch.device("cuda:0")
+  print("GPU")
+else:
+  device = torch.device("cpu")
+  print("CPU")
+
+model = Network2()
+
+model = model.to(device)
 
 TrainData = EmotionData('train.csv', './')
-TrainLoader = DataLoader(TrainData, batch_size=32, shuffle=True, pin_memory=True)  # create train data loaders
+TrainLoader = DataLoader(TrainData, batch_size=32, shuffle=True, pin_memory=True,num_workers=4)  # create train data loaders
 
 TestData = EmotionDataTest('test.csv', './')
-TestLoader = DataLoader(TestData, batch_size=64, pin_memory=True)  # create validation data loaders
+TestLoader = DataLoader(TestData, batch_size=64, pin_memory=True,num_workers=4)  # create validation data loaders
 
-optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.8)
+optimizer = torch.optim.RMSprop(model.parameters(), lr=lr)
+
 criterion = nn.CrossEntropyLoss()
 
-trainer = create_supervised_trainer(model, optimizer, criterion)
+trainer = create_supervised_trainer(model, optimizer, criterion,
+                                    device= "cuda:0" if torch.cuda.is_available() else "cpu")
 
 val_metrics = {
     "accuracy": Accuracy(),
     "loss": Loss(criterion)
 }
 #evaluator = create_supervised_evaluator(model, metrics=val_metrics)
-train_evaluator = create_supervised_evaluator(model, metrics=val_metrics)
-validation_evaluator = create_supervised_evaluator(model, metrics=val_metrics)
+train_evaluator = create_supervised_evaluator(model, metrics=val_metrics,
+                                    device= "cuda:0" if torch.cuda.is_available() else "cpu")
+validation_evaluator = create_supervised_evaluator(model, metrics=val_metrics,
+                                    device= "cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 @trainer.on(Events.ITERATION_COMPLETED(every=100))
@@ -72,34 +86,15 @@ def log_validation_results(trainer):
     print(
         f"Validation Results - Epoch: {trainer.state.epoch}  Avg accuracy: {metrics['accuracy']:} Avg loss: {metrics['loss']:} | Val Loss: {trainer.state.output:.2f}")
 
-checkpointer = ModelCheckpoint('saved_models', 'EmotionData', n_saved=2, create_dir=True, save_as_state_dict=True, require_empty=False)
-trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpointer, {'EmotionData': model})
+#checkpointer = ModelCheckpoint('saved_models', 'EmotionData', n_saved=2, create_dir=True, save_as_state_dict=True, require_empty=False)
+#trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpointer, {'EmotionData': model})
 
-trainer.run(TrainLoader, max_epochs=2)
-
-
-from torchvision.utils import make_grid
-import matplotlib.pyplot as plt
+def save_model(trainer, model):
+    out_path = "model_epoch_{}.pth".format(trainer.current_epoch)
+    torch.save(model.state_dict, out_path)
 
 
+trainer.add_event_handler(Events.COMPLETED, save_model, model)
 
+trainer.run(TrainLoader, max_epochs=50)
 
-
-
-
-
-
-
-
-
-# plot images of a batchbatch
-def show_batch(dl):
-    """Plot images grid of single batch"""
-    for images, labels in dl:
-        fig, ax = plt.subplots(figsize=(16, 12))
-        ax.set_xticks([])
-        ax.set_yticks([])
-        ax.imshow(make_grid(images, nrow=16).permute(1, 2, 0))
-        break
-
-# show_batch(Train_Loader)
