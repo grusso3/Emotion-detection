@@ -4,11 +4,15 @@ import numpy as np
 import pandas as pd
 from torch import nn
 from main import model
-from main import TestLoader
 import torch
 from sklearn.metrics import confusion_matrix
 from torchvision import models
+from Classes import EmotionDataTest
+from torch.utils.data import DataLoader
 
+
+TestData = EmotionDataTest('test.csv', './')
+TestLoader = DataLoader(TestData, batch_size=64, pin_memory=True,num_workers=4)  # create validation data loaders
 
 ########### BRUTE FORCE #########
 model16 = models.vgg16(pretrained=True)
@@ -28,6 +32,9 @@ label = []
 correct, all = 0,0
 for images,labels in TestLoader:
     for i in range(len(labels)):
+        if torch.cuda.is_available():
+            images = images.cuda()
+            labels = labels.cuda()
         img = images[i].view(1,1,48,48)
         with torch.no_grad():
             logps = model16(img)
@@ -67,6 +74,9 @@ label = []
 correct, all = 0,0
 for images,labels in TestLoader:
     for i in range(len(labels)):
+        if torch.cuda.is_available():
+            images = images.cuda()
+            labels = labels.cuda()
         img = images[i].view(1,1,48,48)
         with torch.no_grad():
             logps = model11(img)
