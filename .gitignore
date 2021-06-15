@@ -121,3 +121,6 @@ wandb/run-20210614_093517-2wds2inp/files/wandb-metadata.json
 wandb/run-20210614_093029-262wqwmc/files/requirements.txt
 *.wandb
 *.pt
+*.yaml
+*.txt
+*.json
