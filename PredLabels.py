@@ -5,12 +5,16 @@ from torch import nn
 import torch
 from sklearn.metrics import confusion_matrix
 from torchvision import models
-from Classes import EmotionDataTest
+from Classes import EmotionDataTest,Network, Network2, EmotionData
 from torch.utils.data import DataLoader
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
+
+TrainData = EmotionData('train.csv', './')
 
 TestData = EmotionDataTest('test.csv', './')
-TestLoader = DataLoader(TestData, batch_size=64, pin_memory=True,num_workers=4)  # create validation data loaders
+TestLoader = DataLoader(TestData, batch_size=64, pin_memory=True)  # create validation data loaders
 
 ########### BRUTE FORCE #########
 model16 = models.vgg16(pretrained=True)
@@ -26,6 +30,7 @@ model16.eval()
 
 prediction = []
 label = []
+
 
 correct, all = 0,0
 for images,labels in TestLoader:
@@ -53,11 +58,12 @@ ax= plt.subplot()
 sns.heatmap(cm, annot=True, fmt='g', ax=ax);  #annot=True to annotate cells, ftm='g' to disable scientific notation
 # labels, title and ticks
 ax.set_xlabel('Predicted labels');ax.set_ylabel('True labels');
-ax.set_title('Confusion Matrix');
+ax.set_title('Confusion Matrix VGG16');
 ax.xaxis.set_ticklabels(['angry', 'disgust', 'fear',"happy","neutral","sad","surprise"]); ax.yaxis.set_ticklabels(['angry', 'disgust', 'fear',"happy","neutral","sad","surprise"]);
 plt.show()
 df = pd.DataFrame({"Actual" : label,"Predicted":prediction})
 df
+
 
 
 #################### VGG 11
@@ -67,9 +73,9 @@ num_features = model11.classifier[6].in_features
 features = list(model11.classifier.children())[:-1] # Remove last layer
 features.extend([nn.Linear(num_features, 7)]) # Add our layer with 4 outputs
 model11.classifier = nn.Sequential(*features)
-model11.load_state_dict(torch.load("saved_models/VGG16e-4_VGG16e-4_8082.pt"),strict= False)
+model11.load_state_dict(torch.load("saved_models/VGG16e-4_VGG16e-4_8082.pt", map_location=torch.device('cpu')),strict= False)
 
-model16.eval()
+model11.eval()
 
 
 prediction = []
@@ -103,10 +109,53 @@ ax= plt.subplot()
 sns.heatmap(cm11, annot=True, fmt='g', ax=ax);  #annot=True to annotate cells, ftm='g' to disable scientific notation
 # labels, title and ticks
 ax.set_xlabel('Predicted labels');ax.set_ylabel('True labels');
-ax.set_title('Confusion Matrix');
+ax.set_title('Confusion Matrix VGG11');
 ax.xaxis.set_ticklabels(['angry', 'disgust', 'fear',"happy","neutral","sad","surprise"]); ax.yaxis.set_ticklabels(['angry', 'disgust', 'fear',"happy","neutral","sad","surprise"]);
 plt.show()
 
 df11 = pd.DataFrame({"Actual" : label,"Predicted":prediction})
 df11
 
+#### NETWORK 1
+
+model1 = Network()
+model1.load_state_dict(torch.load("saved_models/EmotionData_EmotionData_1796.pt", map_location=torch.device('cpu')),strict= False)
+
+model1.eval()
+
+prediction = []
+label = []
+correct, all = 0,0
+for images,labels in TestLoader:
+    for i in range(len(labels)):
+        if torch.cuda.is_available():
+            images = images.cuda()
+            labels = labels.cuda()
+        img = images[i].view(1,1,48,48)
+        with torch.no_grad():
+            logps = model1(img)
+        ps = torch.exp(logps)
+        prob = list(ps.cpu()[0])
+        pred_label = prob.index(max(prob))
+        true_label = labels.cpu()[i]
+        if (true_label == pred_label):
+            correct += 1
+        all += 1
+        prediction.append(pred_label)
+        label.append(true_label)
+print("Number of images", all)
+print("Accuracy",correct/all)
+
+cm11 = confusion_matrix(label,prediction)
+
+cm11 = confusion_matrix(label,prediction)
+ax= plt.subplot()
+sns.heatmap(cm11, annot=True, fmt='g', ax=ax);  #annot=True to annotate cells, ftm='g' to disable scientific notation
+# labels, title and ticks
+ax.set_xlabel('Predicted labels');ax.set_ylabel('True labels');
+ax.set_title('Confusion Matrix CNN1');
+ax.xaxis.set_ticklabels(['angry', 'disgust', 'fear',"happy","neutral","sad","surprise"]); ax.yaxis.set_ticklabels(['angry', 'disgust', 'fear',"happy","neutral","sad","surprise"]);
+plt.show()
+
+df11 = pd.DataFrame({"Actual" : label,"Predicted":prediction})
+df11

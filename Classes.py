@@ -11,55 +11,52 @@ import torchvision.transforms as transforms
 
 
 class EmotionData(Dataset):
-    def __init__(self, csv_file, root_dir):
+    def _init_(self, csv_file, root_dir):
         self.annotations = pd.read_csv(csv_file)  # pd object
         self.root_dir = root_dir
 
-    def __len__(self):
+    def _len_(self):
         return len(self.annotations)
 
-    def __getitem__(self, index):
+    def _getitem_(self, index):
         img_path = os.path.join(self.root_dir, self.annotations.iloc[index][0])
         image = Image.open(img_path)
         y_label = torch.tensor(int(self.annotations.iloc[index][1])).long()
 
-        # Image 2 tensor
         transform_train = transforms.Compose([
-            #transforms.RandomHorizontalFlip(p=0.5),
-            #transforms.RandomRotation(degrees=(-90, 90)),
-            #transforms.RandomVerticalFlip(p=0.5),
             transforms.ToTensor()
         ])
         image = transform_train(image)
-        #return image, y_label
 
-        return image.repeat(3,1,1), y_label
+        #return image, y_label     # for our network, hash it while training VGG
+
+        return image.repeat(3,1,1), y_label # for VGG, hash it while training our own Nets
 
 class EmotionDataTest(Dataset):
-    def __init__(self, csv_file, root_dir):
-        self.annotations = pd.read_csv(csv_file)  # pd object
+    def _init_(self, csv_file, root_dir):
+        self.annotations = pd.read_csv(csv_file)
         self.root_dir = root_dir
 
-    def __len__(self):
+    def _len_(self):
         return len(self.annotations)
 
-    def __getitem__(self, index):
+    def _getitem_(self, index):
         img_path = os.path.join(self.root_dir, self.annotations.iloc[index][0])
         image = Image.open(img_path)
         y_label = torch.tensor(int(self.annotations.iloc[index][1])).long()
 
-        # Image 2 tensor
+
         transform = transforms.ToTensor()
         image = transform(image)
-        #return image, y_label
+        #return image, y_label    # for our network, hash it while training VGG
 
-        return image.repeat(3, 1, 1), y_label
+        return image.repeat(3, 1, 1), y_label # for VGG, hash it while training our own Nets
 
 
 
 class Network(nn.Module):
-    def __init__(self):
-        super().__init__()
+    def _init_(self):
+        super()._init_()
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=6, kernel_size=(4, 4))
         self.conv2 = nn.Conv2d(in_channels=6, out_channels=12, kernel_size=(3, 3))
         self.fc1 = nn.Linear(in_features=12*9*9, out_features=120)
@@ -98,9 +95,9 @@ class Network(nn.Module):
 
 
 class Network2(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=(3, 3), padding=(1, 1), stride=(1, 1))
+    def _init_(self):
+        super()._init_()
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=(3, 3), padding=(1, 1), stride=(1, 1))
         self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(3, 3), padding=(1, 1), stride=(1, 1))
         self.conv3 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=(3, 3), padding=(1, 1), stride=(1, 1))
         self.fc1 = nn.Linear(in_features= 128 * 42 * 42, out_features=512)
@@ -141,56 +138,3 @@ class Network2(nn.Module):
         t = F.softmax(t, dim = 1 )
         # already included in cross entrophy loss
         return t
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#
-#
-# class EmotionData(Dataset):
-#     def __init__(self, csv_file, root_dir, transform=None):
-#         self.annotations = pd.read_csv(csv_file)  # pd object
-#         self.root_dir = root_dir
-#         self.transform = transform
-#
-#     def __len__(self):
-#         return len(self.annotations)
-#
-#     def __getitem__(self, index):
-#         img_path = os.path.join(self.root_dir, self.annotations.iloc[index, 0])
-#         image = Image.open(img_path).convert("RGB")
-#         y_label = torch.tensor(int(self.annotations[index, 1]))
-#
-#         if self.transform is not None:
-#             image = self.transform(image)
-#         return image, y_label
-
-
-
-
-
-
-
-
-
-
-

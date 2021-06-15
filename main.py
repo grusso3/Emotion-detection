@@ -7,10 +7,14 @@ import wandb
 from Classes import Network, Network2
 from Classes import EmotionData,EmotionDataTest
 from ignite.handlers import ModelCheckpoint, EarlyStopping
+import hiddenlayer as hl
 
+model = Network()
+
+hl.build_graph(model, torch.zeros([32, 3, 48, 48]))
 
 lr = 1e-6
-wandb.login(key="a8895ab6bdbe3827b2a137c581e59e9440154140")
+wandb.login(key="a8895ab6bdbe3827b2a137c581e59e9440154140") # this is my api, subscribe on wandb and paste your API here to monitor your training
 
 wandb.init(
       # Set entity to specify your username or team name
@@ -30,7 +34,6 @@ else:
   device = torch.device("cpu")
   print("CPU")
 
-model = Network2()
 
 model = model.to(device)
 
@@ -86,15 +89,10 @@ def log_validation_results(trainer):
     print(
         f"Validation Results - Epoch: {trainer.state.epoch}  Avg accuracy: {metrics['accuracy']:} Avg loss: {metrics['loss']:} | Val Loss: {trainer.state.output:.2f}")
 
-#checkpointer = ModelCheckpoint('saved_models', 'EmotionData', n_saved=2, create_dir=True, save_as_state_dict=True, require_empty=False)
-#trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpointer, {'EmotionData': model})
 
-def save_model(trainer, model):
-    out_path = "model_epoch_{}.pth".format(trainer.current_epoch)
-    torch.save(model.state_dict, out_path)
+checkpointer = ModelCheckpoint('saved_models', 'EmotionData', n_saved=2, create_dir=True, save_as_state_dict=True, require_empty=False)
+trainer.add_event_handler(Events.EPOCH_COMPLETED, checkpointer, {'EmotionData': model})
 
 
-trainer.add_event_handler(Events.COMPLETED, save_model, model)
 
-trainer.run(TrainLoader, max_epochs=50)
-
+trainer.run(TrainLoader, max_epochs=30)

@@ -1,5 +1,5 @@
-from __future__ import print_function
-from __future__ import division
+from _future_ import print_function
+from _future_ import division
 import torch.nn as nn
 from torchvision import datasets, models, transforms
 import torch
@@ -15,24 +15,22 @@ from ignite.handlers import EarlyStopping
 
 
 
-wandb.login(key="a8895ab6bdbe3827b2a137c581e59e9440154140")
+wandb.login(key="a8895ab6bdbe3827b2a137c581e59e9440154140") # this is my api, subscribe on wandb and paste your API here to monitor your training
 
 
 # Load the pretrained model from pytorch
-model = models.vgg11(pretrained=True)
+model = models.vgg16(pretrained=True)
 print(model.classifier[6].out_features) # 1000
 num_features = model.classifier[6].in_features
 features = list(model.classifier.children())[:-1] # Remove last layer
-features.extend([nn.Linear(num_features, 7)]) # Add our layer with 4 outputs
+features.extend([nn.Linear(num_features, 7)]) # Add our layer with 7 outputs
 model.classifier = nn.Sequential(*features)
-# Freeze training for all layers
+
 for param in model.features.parameters():
     param.require_grad = True
 
+print(model)
 
-#print(model)
-
-#model = model.to("cuda:0")
 
 
 lr = 1e-4
@@ -127,7 +125,7 @@ def score_function(trainer):
     return -val_loss
 
 handler = EarlyStopping(patience=5, score_function=score_function, trainer=trainer)
-# Note: the handler is attached to an *Evaluator* (runs one epoch on validation dataset).
+# Note: the handler is attached to an Evaluator (runs one epoch on validation dataset).
 validation_evaluator.add_event_handler(Events.COMPLETED, handler)
 
 trainer.run(TrainLoader, max_epochs=30)
