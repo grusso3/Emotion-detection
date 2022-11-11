@@ -1,6 +1,0 @@
-
-> library(keras)
-
-> library(cloudml)
-
-> data_path <- gs_data_dir_local("gs://boreal-dock-314313/ada2021/data/train/")
